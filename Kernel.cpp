@@ -25,7 +25,7 @@ void ProcessCommand(const char* cmd)
 {
 	if (strcmp(cmd, "help") == 0)
 	{
-		PutChars("Available commands: help, clear, echo <text>, tedit\n", BACKGROUND_WHITE | FOREGROUND_BLUE);
+		PutChars("Available commands: help, clear, echo <text>, tedit, man <cmd>\n", BACKGROUND_WHITE | FOREGROUND_BLUE);
 	}
 	else if (strcmp(cmd, "clear") == 0)
 	{
@@ -37,16 +37,47 @@ void ProcessCommand(const char* cmd)
 		PutChars(cmd + 5, BACKGROUND_WHITE | FOREGROUND_BLUE);
 		PutChars("\n");
 	}
+	else if (strncmp(cmd, "man ", 4) == 0)
+	{
+		if (strcmp(cmd+4, "help") == 0)
+		{
+			PutChars("help is a command used to find out available commands in the system.", BACKGROUND_WHITE | FOREGROUND_BLUE);
+		}
+		else if (strcmp(cmd+4, "clear") == 0)
+		{
+			PutChars("clear is a command used to clear the whole screen.", BACKGROUND_WHITE | FOREGROUND_BLUE);
+		}
+		else if (strcmp(cmd+4, "echo") == 0)
+		{
+			PutChars("echo <text> is a command used to display <text> back to you.", BACKGROUND_WHITE | FOREGROUND_BLUE);
+		}
+		else if (strcmp(cmd+4, "tedit") == 0)
+		{
+			PutChars("tedit is a command used to write assembler and execute it.", BACKGROUND_WHITE | FOREGROUND_BLUE);
+		}
+		else if (strcmp(cmd+4, "man") == 0)
+		{
+			PutChars("man is a command used to find information about commands.", BACKGROUND_WHITE | FOREGROUND_BLUE);
+		}
+		else
+		{
+			PutChars(cmd+4, BACKGROUND_WHITE | FOREGROUND_BLUE);
+			PutChars(" is not a valid command.");
+		}
+		PutChars("\n");
+	}
 	else if (strcmp(cmd, "tedit") == 0)
 	{
+		ClearScreen();
+		SetCursorPosition(0);
 		InTextEditMode = true;
 		TEditLength = 0;
 		TEditBuffer[0] = '\0';
-		PutChars("Write code (ESC to run & exit):\n", BACKGROUND_WHITE | FOREGROUND_GREEN);
+		PutChars("Untitled.ASM (ESC to run & exit):\n", BACKGROUND_WHITE | FOREGROUND_GREEN);
 	}
 	else if (strcmp(cmd, "") == 0)
 	{
-		//Fuck you
+		//This exists solely to not trigger the unknown statement when just pressing enter
 	}
 	else
 	{
@@ -59,14 +90,14 @@ void ProcessCommand(const char* cmd)
 void UppercaseExceptHex(char* buffer) {
 	bool inHex = false;
 	for (int i = 0; buffer[i] != '\0'; i++) {
-		// Detect start of 0x sequence
+		//Detect start of 0x sequence
 		if (buffer[i] == '0' && (buffer[i + 1] == 'x' || buffer[i + 1] == 'X')) {
 			inHex = true;
-			i += 1; // skip 'x'
+			i += 1; //skip 'x'
 			continue;
 		}
 
-		// If in hex mode, skip until space, comma, newline, or null
+		//If in hex mode, skip until space, comma, newline, or null
 		if (inHex) {
 			if (buffer[i] == ' ' || buffer[i] == ',' || buffer[i] == '\n' || buffer[i] == '\0') {
 				inHex = false;
@@ -74,7 +105,7 @@ void UppercaseExceptHex(char* buffer) {
 			continue;
 		}
 
-		// Convert lowercase letter to uppercase
+		//Convert lowercase letter to uppercase
 		if (buffer[i] >= 'a' && buffer[i] <= 'z') {
 			buffer[i] -= 32;
 		}
@@ -85,7 +116,7 @@ void KeyboardHandler(uint8_t scanCode, uint8_t chr)
 {
 	if (InTextEditMode)
 	{
-		if (scanCode == 0x01) // ESC key
+		if (scanCode == 0x01) //ESC key
 		{
 			InTextEditMode = false;
 			TEditBuffer[TEditLength] = '\0';
@@ -99,7 +130,7 @@ void KeyboardHandler(uint8_t scanCode, uint8_t chr)
 			PutChars("> ", BACKGROUND_WHITE | FOREGROUND_BLUE);
 			return;
 		}
-		else if (scanCode == 0x1C) // Enter key
+		else if (scanCode == 0x1C) //Enter key
 		{
 			if (TEditLength < MAX_TEDIT_SIZE - 1)
 			{
@@ -108,7 +139,7 @@ void KeyboardHandler(uint8_t scanCode, uint8_t chr)
 				PutChars("\n");
 			}
 		}
-		else if (scanCode == 0x0E) // Backspace
+		else if (scanCode == 0x0E) //Backspace
 		{
 			if (TEditLength > 0)
 			{

@@ -3,11 +3,11 @@
 #include "Typedefs.cpp"
 #include "TextPrint.cpp"
 
-// Output buffer
+//Output buffer
 uint8_t MachineCodeBuffer[64];
 int MachineCodeSize = 0;
 
-// Simple hex parser
+//Simple hex parser
 uint64_t ParseHex(const char* str)
 {
     uint64_t val = 0;
@@ -22,10 +22,9 @@ uint64_t ParseHex(const char* str)
     return val;
 }
 
-// Literal string buffer
+//Literal string buffer
 const char* LiteralPool[] = {
-    "GOD", // index 0
-    // Add more if needed
+    "GOD", //index 0
 };
 
 void PutChars_Asm(const char *str)
@@ -37,25 +36,25 @@ void CompileFromSource(const char *src)
 {
     MachineCodeSize = 0;
 
-    // A buffer for each line
+    //A buffer for each line
     char line[128];
     int i = 0;
 
     while (*src)
     {
-        // Read one line
+        //Read one line
         i = 0;
         while (*src && *src != '\n' && i < sizeof(line) - 1)
             line[i++] = *src++;
         line[i] = 0;
 
-        // Skip newline
+        //Skip newline
         if (*src == '\n') src++;
 
-        // Skip empty lines
+        //Skip empty lines
         if (line[0] == 0) continue;
 
-        // Compile this line
+        //Compile this line
         if (strncmp(line, "MOV RAX, 0x", 11) == 0)
         {
             const char* immStr = line + 11;
@@ -101,7 +100,7 @@ void CompileFromSource(const char *src)
             if (MachineCodeSize + 15 > sizeof(MachineCodeBuffer) - 1)
                 break;
 
-            // mov rdi, rax
+            //mov rdi, rax
             MachineCodeBuffer[MachineCodeSize++] = 0x48;
             MachineCodeBuffer[MachineCodeSize++] = 0x89;
             MachineCodeBuffer[MachineCodeSize++] = 0xC7;
@@ -119,30 +118,33 @@ void CompileFromSource(const char *src)
         }
         else
         {
-            MachineCodeBuffer[MachineCodeSize++] = 0xCC; // INT3
+            PutChars("\nInvalid instruction!\n");
         }
     }
 
-    // Add RET at the end
+    //Add RET at the end
     if (MachineCodeSize < sizeof(MachineCodeBuffer))
         MachineCodeBuffer[MachineCodeSize++] = 0xC3;
 }
 
 void RunCode()
 {
-    uint64_t rax_value;
+    if (MachineCodeBuffer != 0)
+    {
+        uint64_t rax_value;
 
-    //Call machine code and then move RAX to rax_value
-    asm volatile (
-        "call *%1\n\t"
-        "mov %%rax, %0\n\t"
-        : "=r"(rax_value)
-        : "r"(MachineCodeBuffer)
-        : "rax"
-    );
+        //Call machine code and then move RAX to rax_value
+        asm volatile (
+            "call *%1\n\t"
+            "mov %%rax, %0\n\t"
+            : "=r"(rax_value)
+            : "r"(MachineCodeBuffer)
+            : "rax"
+        );
 
-    //Print RAX value
-    PutChars("\nRAX = ");
-    PutChars(HexToString(rax_value));
-    PutChars("\n");
+        //Print RAX value
+        PutChars("\nRAX = ");
+        PutChars(HexToString(rax_value));
+        PutChars("\n");
+    }
 }
